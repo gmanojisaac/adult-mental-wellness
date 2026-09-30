@@ -1,30 +1,214 @@
 'use strict';
+
 (() => {
-  const ids=['adults','parents','students','employees'];
-  const names={adults:'Adults',parents:'Parents',students:'Students',employees:'Employees'};
-  const audio=Object.fromEntries(ids.map(id=>{const a=new Audio(`/assets/${id}.mp3`);a.preload='none';return [id,a]}));
-  const toggle=document.querySelector('#audio-toggle');
-  const hint=document.querySelector('#audio-hint');
-  const status=document.querySelector('#audio-status');
-  const hero=document.querySelector('#hero-video');
-  let enabled=false, active=null, timer=null, generation=0;
-  const announce=text=>{if(status)status.textContent=text};
-  function refresh(){document.querySelectorAll('[data-preview]').forEach(b=>{const playing=b.dataset.preview===active;b.setAttribute('aria-pressed',String(playing));if(b.classList.contains('listen-button'))b.textContent=playing?'Stop audio preview':'Listen to program preview';else b.setAttribute('aria-label',`${playing?'Stop':'Play'} ${names[b.dataset.preview]} audio preview`)});document.querySelectorAll('[data-program]').forEach(c=>c.classList.toggle('is-playing',c.dataset.program===active));}
-  function stop(){clearTimeout(timer);timer=null;generation++;ids.forEach(id=>{audio[id].pause();audio[id].currentTime=0});active=null;refresh();}
-  async function play(id){stop();const token=generation;hero?.pause();active=id;refresh();try{await audio[id].play();if(generation!==token){audio[id].pause();audio[id].currentTime=0;return}announce(`${names[id]} preview playing.`)}catch{if(generation===token){active=null;refresh();announce('Audio could not play. Try the speaker button.');if(hint)hint.textContent='Tap a card’s speaker to play its preview.'}}}
-  function setEnabled(value){enabled=value;if(toggle){toggle.setAttribute('aria-pressed',String(value));toggle.textContent=value?'Mute audio previews':'Enable audio previews'}if(hint)hint.textContent=value?'Hover over a card to hear its description.':'Or tap a card’s speaker to listen.';if(!value)stop();}
-  toggle?.addEventListener('click',()=>{setEnabled(!enabled);announce(enabled?'Hover audio enabled.':'Audio previews muted.')});
-  document.querySelectorAll('[data-preview]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.preview;if(active===id){stop();return}setEnabled(true);void play(id)}));
-  document.querySelectorAll('[data-program]').forEach(card=>{
-    const schedule=()=>{if(!enabled)return;clearTimeout(timer);timer=setTimeout(()=>void play(card.dataset.program),400)};
-    card.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')schedule()});
-    card.addEventListener('pointerleave',()=>{clearTimeout(timer);if(active===card.dataset.program)stop()});
-    card.querySelector('.card-link').addEventListener('focus',schedule);
-    card.addEventListener('focusout',e=>{if(!card.contains(e.relatedTarget)){clearTimeout(timer);if(active===card.dataset.program)stop()}});
-    card.querySelector('.card-link').addEventListener('click',stop);
+  const names = {
+    adults: 'Adults 18+',
+    parents: 'Parents',
+    students: 'Students 18+',
+    employees: 'Employees 18+',
+  };
+  const audio = Object.fromEntries(Object.keys(names).map(id => {
+    const preview = new Audio(`/assets/${id}.mp3`);
+    preview.preload = 'none';
+    return [id, preview];
+  }));
+  const buttons = document.querySelectorAll('[data-preview]');
+  const cards = document.querySelectorAll('[data-program]');
+  const toggle = document.querySelector('#audio-toggle');
+  const hint = document.querySelector('#audio-hint');
+  const status = document.querySelector('#audio-status');
+  const hero = document.querySelector('#hero-video');
+  const heroUnmute = document.querySelector('#hero-unmute');
+  const heroUnmuteLabel = document.querySelector('#hero-unmute-label');
+  const heroControls = document.querySelector('#hero-controls');
+  const heroPlayToggle = document.querySelector('#hero-play-toggle');
+  const heroSoundToggle = document.querySelector('#hero-sound-toggle');
+  let enabled = false;
+  let active = null;
+  let timer = null;
+  let generation = 0;
+
+  function announce(text) {
+    if (status) status.textContent = text;
+  }
+
+  function refreshHero() {
+    if (!hero || !heroUnmute) return;
+    heroUnmute.hidden = active !== null || (!hero.muted && !hero.paused);
+    const label = hero.paused ? 'Play video with sound' : 'Unmute video';
+    heroUnmuteLabel.textContent = label;
+    heroUnmute.setAttribute('aria-label', `${label} and enable audio previews`);
+    heroPlayToggle.dataset.playing = String(!hero.paused);
+    heroPlayToggle.setAttribute('aria-label', hero.paused ? 'Play video' : 'Pause video');
+    heroPlayToggle.title = hero.paused ? 'Play video' : 'Pause video';
+    heroSoundToggle.dataset.muted = String(hero.muted);
+    heroSoundToggle.setAttribute('aria-label', hero.muted ? 'Unmute video' : 'Mute video');
+    heroSoundToggle.title = hero.muted ? 'Unmute video' : 'Mute video';
+  }
+
+  function refresh() {
+    buttons.forEach(button => {
+      const playing = button.dataset.preview === active;
+      button.setAttribute('aria-pressed', String(playing));
+      if (button.classList.contains('listen-button')) {
+        button.textContent = playing ? 'Stop audio preview' : 'Listen to program preview';
+      } else {
+        button.setAttribute('aria-label', `${playing ? 'Stop' : 'Play'} ${names[button.dataset.preview]} audio preview`);
+      }
+    });
+    cards.forEach(card => card.classList.toggle('is-playing', card.dataset.program === active));
+    refreshHero();
+  }
+
+  function cancelHover() {
+    clearTimeout(timer);
+    timer = null;
+  }
+
+  function stop() {
+    cancelHover();
+    generation++;
+    Object.values(audio).forEach(preview => {
+      preview.pause();
+      preview.currentTime = 0;
+    });
+    active = null;
+    refresh();
+    announce('');
+  }
+
+  async function play(id) {
+    stop();
+    const token = generation;
+    // Keep the cinematic video moving, but give the preview exclusive use of sound.
+    if (hero) hero.muted = true;
+    active = id;
+    refresh();
+    try {
+      await audio[id].play();
+      // stop() already cancels old playback. A stale promise must not pause a newer one.
+      if (generation !== token) return;
+      announce(`${names[id]} preview playing.`);
+    } catch {
+      if (generation !== token) return;
+      stop();
+      announce('Audio could not play. Try the speaker button.');
+      if (hint) hint.textContent = 'Use a speaker to play its preview.';
+    }
+  }
+
+  function setEnabled(value) {
+    enabled = value;
+    if (toggle) {
+      toggle.setAttribute('aria-pressed', String(value));
+      toggle.textContent = value ? 'Mute audio previews' : 'Enable audio previews';
+    }
+    if (hint) hint.textContent = value ? 'Hover a program to listen. Move away to stop.' : 'Unmute the video or enable previews, then hover a program.';
+    if (!value) stop();
+  }
+
+  toggle?.addEventListener('click', () => {
+    setEnabled(!enabled);
+    announce(enabled ? 'Hover audio enabled.' : 'Audio previews muted.');
   });
-  ids.forEach(id=>{audio[id].addEventListener('ended',()=>{if(active===id){active=null;refresh();announce('Audio preview finished.')}});audio[id].addEventListener('error',()=>{if(active===id){stop();announce('The audio preview is unavailable. The description is shown on the card.')}})});
-  hero?.addEventListener('play',stop);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();hero?.pause()}});
-  window.addEventListener('pagehide',stop);
+
+  buttons.forEach(button => button.addEventListener('click', () => {
+    const id = button.dataset.preview;
+    if (active === id) {
+      stop();
+      announce('Audio preview stopped.');
+      return;
+    }
+    setEnabled(true);
+    void play(id);
+  }));
+
+  cards.forEach(card => {
+    card.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'mouse' || !enabled) return;
+      cancelHover();
+      timer = setTimeout(() => void play(card.dataset.program), 400);
+    });
+    card.addEventListener('pointerleave', event => {
+      // Touch pointers leave on finger-up; keep an explicitly tapped preview playing.
+      if (event.pointerType !== 'mouse') return;
+      cancelHover();
+      if (active === card.dataset.program) stop();
+    });
+    card.addEventListener('focusout', event => {
+      if (card.contains(event.relatedTarget)) return;
+      cancelHover();
+      if (active === card.dataset.program) stop();
+    });
+    card.querySelector('.card-link')?.addEventListener('click', stop);
+  });
+
+  Object.entries(audio).forEach(([id, preview]) => {
+    preview.addEventListener('ended', () => {
+      if (active !== id) return;
+      stop();
+      announce('Audio preview finished.');
+    });
+    preview.addEventListener('error', () => {
+      if (active !== id) return;
+      stop();
+      announce('The audio preview is unavailable. The description is shown on the card.');
+    });
+  });
+
+  if (hero && heroUnmute) {
+    async function unmuteHero() {
+      const moveFocus = document.activeElement === heroUnmute;
+      stop();
+      setEnabled(true);
+      hero.muted = false;
+      try {
+        await hero.play();
+      } catch {
+        announce('The video could not play. Use the play button to try again.');
+      }
+      refreshHero();
+      if (moveFocus && heroUnmute.hidden) heroSoundToggle.focus({ preventScroll: true });
+    }
+
+    heroUnmute.addEventListener('click', () => void unmuteHero());
+    heroSoundToggle.addEventListener('click', () => {
+      if (hero.muted) void unmuteHero();
+      else hero.muted = true;
+    });
+    heroPlayToggle.addEventListener('click', () => {
+      if (hero.paused) {
+        if (!hero.muted) stop();
+        void hero.play().catch(() => {
+          refreshHero();
+          announce('The video could not play. Use the play button to try again.');
+        });
+      } else hero.pause();
+    });
+    hero.addEventListener('play', () => {
+      if (!hero.muted) stop();
+      refreshHero();
+    });
+    hero.addEventListener('pause', refreshHero);
+    hero.addEventListener('volumechange', () => {
+      if (!hero.muted && (active !== null || timer !== null)) stop();
+      refreshHero();
+    });
+
+    // Native controls remain available if JavaScript is unavailable.
+    hero.controls = false;
+    heroControls.hidden = false;
+    refreshHero();
+    void hero.play().catch(refreshHero);
+  }
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') stop();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stop();
+      hero?.pause();
+    }
+  });
+  window.addEventListener('pagehide', stop);
 })();

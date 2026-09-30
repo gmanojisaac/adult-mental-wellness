@@ -2,6 +2,8 @@
 
 A Vercel-ready static website using the supplied cinematic images, finished hero video and four voice previews. No dependencies, environment variables or paid backend are required.
 
+The landing page contains a compact project identity and one cinematic panel: the full hero video above four compact image cards. Cards use four columns on desktop, two at tablet widths and one on mobile. Descriptions are readable HTML text over the images, and the existing program pages remain available at the routes below.
+
 ## Deploy to your repository and Vercel
 
 1. Upload the CONTENTS of this project to `gmanojisaac/adult-mental-wellness`. `package.json`, `vercel.json`, `src/` and `scripts/` must be at the repository root, not inside another folder. Keep the ZIP out of the repository.
@@ -23,7 +25,9 @@ Requires Node.js 20 or later. Run `npm run dev` and open `http://localhost:3000`
 
 ## Audio and video
 
-The hero has user-controlled playback. Enable audio previews to start narration after a 400ms mouse hover; moving away stops and resets it. Only one preview plays at once. Each card has an independent speaker button for touch users. Card links open the matching program overview. Keyboard focus supports previews after enabling audio. Audio and video do not play over each other. Playback failures have an accessible message.
+The hero autoplays muted, loops, and uses contain sizing to keep the whole frame visible. Its central Unmute button turns on video sound and enables the card previews. If the browser blocks autoplay, the same button offers manual playback. Separate pause/play and mute controls remain available; native video controls are retained when JavaScript is unavailable.
+
+Unmute the hero or select Enable audio previews to start narration after a 400ms mouse hover; moving away stops and resets it. Only one preview plays at once. Each card has an independent speaker button for touch and keyboard users: tap it, or focus it and press Enter or Space, to play or stop. A speaker button also enables previews. Mute audio previews stops and resets playback and cancels pending hover playback; Escape stops the current preview. Card links open the matching program overview. Starting a preview mutes the hero while its video keeps playing; unmuting the hero stops previews. Playback failures have an accessible message.
 
 Assets live in `src/assets/`. Uploaded PNGs were converted into smaller WebP images; visual content was preserved. Supplied MP3 and MP4 files are unchanged. Card descriptions remain real HTML text.
 
