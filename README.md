@@ -1,0 +1,32 @@
+# Everyday adult mental-wellness learning program
+
+A Vercel-ready static website using the supplied cinematic images, finished hero video and four voice previews. No dependencies, environment variables or paid backend are required.
+
+## Deploy to your repository and Vercel
+
+1. Upload the CONTENTS of this project to `gmanojisaac/adult-mental-wellness`. `package.json`, `vercel.json`, `src/` and `scripts/` must be at the repository root, not inside another folder. Keep the ZIP out of the repository.
+2. In Vercel, Add New → Project → import that repository.
+3. Framework preset: **Other**. Build command: **npm run build**. Output directory: **dist**. These settings are already included in `vercel.json`.
+4. Deploy. Test all four program links and speaker buttons on the generated URL.
+
+## Local preview
+
+Requires Node.js 20 or later. Run `npm run dev` and open `http://localhost:3000`. Run `npm run build` to create `dist/`.
+
+## Page routes
+
+- `/` landing page
+- `/programs/adults/` — 52 weeks, non-parent adults 18+
+- `/programs/parents/` — 52 weeks, parents supporting minor children without diagnosing them
+- `/programs/students/` — 4 weeks, students 18+
+- `/programs/employees/` — 4 weeks, employees 18+
+
+## Audio and video
+
+The hero has user-controlled playback. Enable audio previews to start narration after a 400ms mouse hover; moving away stops and resets it. Only one preview plays at once. Each card has an independent speaker button for touch users. Card links open the matching program overview. Keyboard focus supports previews after enabling audio. Audio and video do not play over each other. Playback failures have an accessible message.
+
+Assets live in `src/assets/`. Uploaded PNGs were converted into smaller WebP images; visual content was preserved. Supplied MP3 and MP4 files are unchanged. Card descriptions remain real HTML text.
+
+## Scope of this first version
+
+This is the landing page and four program overview pages. Enrollment, accounts, scheduling, payments, WhatsApp reminders, lesson delivery, quizzes and certificates require the separate progress-app implementation. No working enrollment/payment form is presented. The supplied hero video did not include a caption file; add verified captions and a transcript before public release. No credentials are included.
