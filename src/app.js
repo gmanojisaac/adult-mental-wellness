@@ -18,6 +18,7 @@
   const hint = document.querySelector('#audio-hint');
   const status = document.querySelector('#audio-status');
   const hero = document.querySelector('#hero-video');
+  const main = document.querySelector('#main');
   const heroUnmute = document.querySelector('#hero-unmute');
   const heroUnmuteLabel = document.querySelector('#hero-unmute-label');
   const heroControls = document.querySelector('#hero-controls');
@@ -27,6 +28,12 @@
   let active = null;
   let timer = null;
   let generation = 0;
+
+  function refreshTileVisibility() {
+    if (!hero || !main || !Number.isFinite(hero.duration)) return;
+    const revealAt = Math.max(hero.duration - 1.5, 0);
+    main.classList.toggle('tiles-hidden', hero.currentTime < revealAt);
+  }
 
   function announce(text) {
     if (status) status.textContent = text;
@@ -157,6 +164,8 @@
   });
 
   if (hero && heroUnmute) {
+    main?.classList.add('tiles-hidden');
+
     async function unmuteHero() {
       const moveFocus = document.activeElement === heroUnmute;
       stop();
@@ -187,9 +196,12 @@
     });
     hero.addEventListener('play', () => {
       if (!hero.muted) stop();
+      refreshTileVisibility();
       refreshHero();
     });
     hero.addEventListener('pause', refreshHero);
+    hero.addEventListener('loadedmetadata', refreshTileVisibility);
+    hero.addEventListener('timeupdate', refreshTileVisibility);
     hero.addEventListener('volumechange', () => {
       if (!hero.muted && (active !== null || timer !== null)) stop();
       refreshHero();

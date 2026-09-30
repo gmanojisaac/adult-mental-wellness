@@ -108,6 +108,8 @@ h1 { font-size: clamp(26px, 3vw, 39px); line-height: 1.2; letter-spacing: -1.1px
 h2 { font-size: clamp(25px, 2.6vw, 34px); line-height: 1.25; letter-spacing: -.8px; }
 h3 { line-height: 1.3; }
 .programs { padding: 8px; scroll-margin-top: 12px; }
+.programs { transition: opacity .5s ease, transform .5s ease; }
+.tiles-hidden .programs { opacity: 0; transform: translateY(18px); pointer-events: none; }
 .audio-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; padding: 0 4px; }
 .audio-toggle, .listen-button {
   border: 1px solid #61c7d454;
@@ -122,6 +124,10 @@ h3 { line-height: 1.3; }
 .audio-toggle[aria-pressed=true] { background: #18514f; border-color: var(--teal); }
 #audio-hint { font-size: 12px; color: var(--muted); }
 .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
+.card-grid .amber { order: 1; }
+.card-grid .teal { order: 2; }
+.card-grid .violet { order: 3; }
+.card-grid .blue { order: 4; }
 .teal { --accent: var(--teal); }
 .amber { --accent: var(--amber); }
 .violet { --accent: var(--violet); }
@@ -211,6 +217,33 @@ footer p { max-width: 440px; }
 .other-programs>div{display:flex;gap:12px;flex-wrap:wrap}
 .other-programs a{padding:9px 19px;border:1px solid #ffffff25;border-radius:25px;font-size:15px}
 .other-programs a:hover{border-color:var(--accent)}
+@media (min-width: 1021px) {
+  .landing { overflow: hidden; }
+  .landing main { width: 100%; }
+  .landing .media-stage {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .landing .hero { border: 0; }
+  .landing .hero-frame { height: calc(100vw * 0.478125); overflow: hidden; background: transparent; }
+  .landing .hero video { height: 100%; max-height: none; object-fit: cover; }
+  .landing .programs {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    margin-top: -242px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .landing .card-copy { min-height: 174px; }
+  .landing .audio-controls { order: -1; margin-top: 0; margin-bottom: 8px; }
+  .landing .hero-controls { position: absolute; right: calc(5% + 12px); bottom: 182px; z-index: 4; }
+}
 @media (max-width: 1020px) {
   .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero video { max-height: none; }
