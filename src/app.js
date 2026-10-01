@@ -30,6 +30,7 @@
   let generation = 0;
   let sequence = null;
   let sequenceIndex = -1;
+  let previewsFinished = false;
 
   function refreshTileVisibility() {
     if (!hero || !main || !Number.isFinite(hero.duration)) return;
@@ -43,7 +44,8 @@
 
   function refreshHero() {
     if (!hero || !heroUnmute) return;
-    heroUnmute.hidden = active !== null || (!hero.muted && !hero.paused);
+    if (heroControls) heroControls.hidden = active !== null;
+    heroUnmute.hidden = previewsFinished || active !== null || (!hero.muted && !hero.paused);
     const label = hero.paused ? 'Play video with sound' : 'Unmute video';
     heroUnmuteLabel.textContent = label;
     heroUnmute.setAttribute('aria-label', `${label} and enable audio previews`);
@@ -108,6 +110,8 @@
       const firstTile = sequence[0];
       sequence = null;
       sequenceIndex = -1;
+      previewsFinished = true;
+      main?.classList.add('previews-finished');
       stop();
       scrollProgramToStart(firstTile);
       announce('Program previews finished.');
