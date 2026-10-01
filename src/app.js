@@ -165,6 +165,22 @@
 
   if (hero && heroUnmute) {
     main?.classList.add('tiles-hidden');
+    hero.autoplay = false;
+    const mobileHeroQuery = window.matchMedia('(max-width: 600px)');
+
+    function updateHeroSource() {
+      const source = mobileHeroQuery.matches ? '/assets/Mobile%20Hero.mp4' : '/assets/hero.mp4';
+      if (hero.getAttribute('src') === source) return;
+      hero.src = source;
+      hero.load();
+    }
+
+    updateHeroSource();
+    mobileHeroQuery.addEventListener('change', () => {
+      const wasPlaying = !hero.paused;
+      updateHeroSource();
+      if (wasPlaying) void hero.play().catch(refreshHero);
+    });
 
     async function unmuteHero() {
       const moveFocus = document.activeElement === heroUnmute;

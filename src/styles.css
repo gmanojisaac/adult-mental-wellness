@@ -125,8 +125,8 @@ h3 { line-height: 1.3; }
 #audio-hint { font-size: 12px; color: var(--muted); }
 .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
 .card-grid .amber { order: 1; }
-.card-grid .teal { order: 2; }
-.card-grid .violet { order: 3; }
+.card-grid .teal { order: 3; }
+.card-grid .violet { order: 2; }
 .card-grid .blue { order: 4; }
 .teal { --accent: var(--teal); }
 .amber { --accent: var(--amber); }
@@ -258,11 +258,19 @@ footer p { max-width: 440px; }
   .brand small { font-size: 11px; max-width: 190px; display: block; }
   .brand-mark { width: 35px; height: 35px; font-size: 22px; border-radius: 11px; }
   .nav-link { font-size: 13px; white-space: nowrap; }
-  .landing .header, .landing main { width: calc(100% - 24px); }
+  .landing .header { width: calc(100% - 24px); }
+  .landing main { width: 100%; padding-bottom: 0; }
   .landing .header { height: 54px; }
   .landing .brand small { max-width: none; }
-  .media-stage { border-radius: 14px; }
-  .hero-controls { right: 8px; bottom: 8px; gap: 6px; }
+  .landing .media-stage { position: relative; border: 0; border-radius: 0; }
+  .landing .hero-frame { height: 100vh; height: 100svh; }
+  .landing .hero video { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; }
+  .landing .programs { position: absolute; right: 0; bottom: 0; left: 0; z-index: 3; width: auto; margin: 0; padding: 8px 10px 10px; background: linear-gradient(180deg, transparent, #071426e8 24%, #071426 100%); }
+  .landing .card-grid { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .landing .card-grid::-webkit-scrollbar { display: none; }
+  .landing .program-card { flex: 0 0 min(78vw, 310px); min-height: 200px; scroll-snap-align: start; }
+  .landing .card-copy { min-height: 200px; padding: 76px 14px 12px; }
+  .landing .hero-controls { right: 8px; bottom: 264px; gap: 6px; }
   .hero-unmute { gap: 6px; }
   #hero-unmute-label { font-size: 11px; }
   .programs { padding: 6px; }
