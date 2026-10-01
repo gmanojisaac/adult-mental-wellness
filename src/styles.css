@@ -96,7 +96,7 @@ button:focus-visible, a:focus-visible {
 .hero-unmute-icon svg { width: 42%; height: 42%; }
 .hero-unmute svg, .hero-control svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 #hero-unmute-label { padding: 3px 12px; border-radius: 20px; background: #071426d9; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.hero-controls { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; }
+.hero-controls { position: absolute; top: 12px; right: 12px; z-index: 4; display: flex; gap: 8px; }
 .hero-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; border: 1px solid #ffffff66; border-radius: 50%; color: white; background: #071426bb; }
 .hero-control svg { width: 22px; height: 22px; }
 .hero-control:hover, .hero-unmute:hover .hero-unmute-icon { background: #154b73cc; }
@@ -242,7 +242,6 @@ footer p { max-width: 440px; }
   }
   .landing .card-copy { min-height: 174px; }
   .landing .audio-controls { order: -1; margin-top: 0; margin-bottom: 8px; }
-  .landing .hero-controls { position: absolute; right: calc(5% + 12px); bottom: 182px; z-index: 4; }
 }
 @media (max-width: 1020px) {
   .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -266,11 +265,11 @@ footer p { max-width: 440px; }
   .landing .hero-frame { height: 100vh; height: 100svh; }
   .landing .hero video { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; }
   .landing .programs { position: absolute; right: 0; bottom: 0; left: 0; z-index: 3; width: auto; margin: 0; padding: 8px 10px 10px; background: linear-gradient(180deg, transparent, #071426e8 24%, #071426 100%); }
-  .landing .card-grid { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .landing .card-grid { display: flex; gap: 8px; padding-right: max(0px, calc(100% - min(78vw, 310px))); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .landing .card-grid::-webkit-scrollbar { display: none; }
   .landing .program-card { flex: 0 0 min(78vw, 310px); min-height: 200px; scroll-snap-align: start; }
   .landing .card-copy { min-height: 200px; padding: 76px 14px 12px; }
-  .landing .hero-controls { right: 8px; bottom: 264px; gap: 6px; }
+  .landing .hero-controls { top: 8px; right: 8px; gap: 6px; }
   .hero-unmute { gap: 6px; }
   #hero-unmute-label { font-size: 11px; }
   .programs { padding: 6px; }

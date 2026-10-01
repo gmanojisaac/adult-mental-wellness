@@ -28,6 +28,8 @@
   let active = null;
   let timer = null;
   let generation = 0;
+  let sequence = null;
+  let sequenceIndex = -1;
 
   function refreshTileVisibility() {
     if (!hero || !main || !Number.isFinite(hero.duration)) return;
@@ -72,9 +74,13 @@
     timer = null;
   }
 
-  function stop() {
+  function stop(preserveSequence = false) {
     cancelHover();
     generation++;
+    if (!preserveSequence) {
+      sequence = null;
+      sequenceIndex = -1;
+    }
     Object.values(audio).forEach(preview => {
       preview.pause();
       preview.currentTime = 0;
@@ -84,8 +90,44 @@
     announce('');
   }
 
-  async function play(id) {
-    stop();
+  function scrollProgramToStart(id) {
+    if (!window.matchMedia('(max-width: 600px)').matches) return;
+    const card = [...cards].find(item => item.dataset.program === id);
+    const grid = card?.parentElement;
+    if (!card || !grid) return;
+    grid.scrollTo({
+      left: grid.scrollLeft + card.getBoundingClientRect().left - grid.getBoundingClientRect().left,
+      behavior: 'smooth',
+    });
+  }
+
+  function advanceProgramSequence() {
+    if (!sequence) return;
+    sequenceIndex++;
+    if (sequenceIndex >= sequence.length) {
+      const firstTile = sequence[0];
+      sequence = null;
+      sequenceIndex = -1;
+      stop();
+      scrollProgramToStart(firstTile);
+      announce('Program previews finished.');
+      return;
+    }
+    const id = sequence[sequenceIndex];
+    scrollProgramToStart(id);
+    void play(id, true);
+  }
+
+  function startProgramSequence() {
+    sequence = [...cards]
+      .sort((left, right) => Number(getComputedStyle(left).order) - Number(getComputedStyle(right).order))
+      .map(card => card.dataset.program);
+    sequenceIndex = -1;
+    advanceProgramSequence();
+  }
+
+  async function play(id, preserveSequence = false) {
+    stop(preserveSequence);
     const token = generation;
     // Keep the cinematic video moving, but give the preview exclusive use of sound.
     if (hero) hero.muted = true;
@@ -98,6 +140,10 @@
       announce(`${names[id]} preview playing.`);
     } catch {
       if (generation !== token) return;
+      if (preserveSequence) {
+        advanceProgramSequence();
+        return;
+      }
       stop();
       announce('Audio could not play. Try the speaker button.');
       if (hint) hint.textContent = 'Use a speaker to play its preview.';
@@ -153,11 +199,19 @@
   Object.entries(audio).forEach(([id, preview]) => {
     preview.addEventListener('ended', () => {
       if (active !== id) return;
+      if (sequence) {
+        advanceProgramSequence();
+        return;
+      }
       stop();
       announce('Audio preview finished.');
     });
     preview.addEventListener('error', () => {
       if (active !== id) return;
+      if (sequence) {
+        advanceProgramSequence();
+        return;
+      }
       stop();
       announce('The audio preview is unavailable. The description is shown on the card.');
     });
@@ -216,6 +270,11 @@
       refreshHero();
     });
     hero.addEventListener('pause', refreshHero);
+    hero.addEventListener('ended', () => {
+      refreshTileVisibility();
+      if (!hero.muted) startProgramSequence();
+      refreshHero();
+    });
     hero.addEventListener('loadedmetadata', refreshTileVisibility);
     hero.addEventListener('timeupdate', refreshTileVisibility);
     hero.addEventListener('volumechange', () => {
