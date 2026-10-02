@@ -68,6 +68,15 @@
     if (response.ok) localStorage.removeItem(visitorIdStorageKey);
   }
 
+  function refreshAnalyticsTileOptOut() {
+    if (!analyticsTileOptOut) return;
+    const optedOut = localStorage.getItem(analyticsOptOutStorageKey) === 'true';
+    const label = optedOut ? 'Opt back in to analytics' : 'Opt out of analytics';
+    analyticsTileOptOut.setAttribute('aria-pressed', String(optedOut));
+    analyticsTileOptOut.setAttribute('aria-label', label);
+    analyticsTileOptOut.title = label;
+  }
+
   async function loadVisitorCount() {
     if (!visitorCount || !visitorCountValue) return;
     try {
@@ -97,6 +106,7 @@
 
   try {
     analyticsNotice.hidden = localStorage.getItem(analyticsNoticeDismissedStorageKey) === 'true' || localStorage.getItem(analyticsOptOutStorageKey) === 'true';
+    refreshAnalyticsTileOptOut();
   } catch {
     analyticsNotice.hidden = false;
   }
@@ -106,26 +116,27 @@
   async function optOutOfAnalytics() {
     analyticsNotice.hidden = true;
     if (visitorCount) visitorCount.hidden = true;
-    if (analyticsTileOptOut) {
-      analyticsTileOptOut.disabled = true;
-      analyticsTileOptOut.setAttribute('aria-label', 'You are opted out of analytics');
-      analyticsTileOptOut.title = 'You are opted out of analytics';
-    }
     try {
       localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
       localStorage.setItem(analyticsOptOutStorageKey, 'true');
+      refreshAnalyticsTileOptOut();
       await visitorCountRequest;
       await removeVisitorRegistration();
     } catch {}
   }
 
-  try {
-    if (localStorage.getItem(analyticsOptOutStorageKey) === 'true' && analyticsTileOptOut) {
-      analyticsTileOptOut.disabled = true;
-      analyticsTileOptOut.setAttribute('aria-label', 'You are opted out of analytics');
-      analyticsTileOptOut.title = 'You are opted out of analytics';
+  async function optInToAnalytics() {
+    try {
+      localStorage.removeItem(analyticsOptOutStorageKey);
+      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
+      refreshAnalyticsTileOptOut();
+    } catch {
+      return;
     }
-  } catch {}
+    analyticsNotice.hidden = true;
+    if (visitorCount) visitorCount.hidden = true;
+    await loadVisitorCount();
+  }
 
   analyticsNoticeClose?.addEventListener('click', () => {
     analyticsNotice.hidden = true;
@@ -135,7 +146,10 @@
   });
 
   analyticsOptOut?.addEventListener('click', () => void optOutOfAnalytics());
-  analyticsTileOptOut?.addEventListener('click', () => void optOutOfAnalytics());
+  analyticsTileOptOut?.addEventListener('click', () => {
+    if (analyticsTileOptOut.getAttribute('aria-pressed') === 'true') void optInToAnalytics();
+    else void optOutOfAnalytics();
+  });
 
   function refreshHero() {
     if (!hero || !heroUnmute) return;

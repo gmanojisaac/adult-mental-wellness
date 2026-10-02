@@ -17,7 +17,7 @@ Requires Node.js 20 or later. Run `npm run dev` and open `http://localhost:3000`
 
 ## Unique visitor counter
 
-The top-left badge shows the count of unique browser profiles that have not opted out. The browser stores a random first-party ID in local storage; the `/api/visitors` function hashes that ID and stores it in an Upstash Redis set. No IP address or personal profile data is stored. Clearing local storage or using a private window creates a new browser ID and can increase the count again. The bottom-left analytics notice and fifth image tile can be used to opt out; opting out removes the browser ID from the Redis set and prevents future counting.
+The top-left badge shows the count of unique browser profiles that have not opted out. The browser stores a random first-party ID in local storage; the `/api/visitors` function hashes that ID and stores it in an Upstash Redis set. No IP address or personal profile data is stored. Clearing local storage or using a private window creates a new browser ID and can increase the count again. The bottom-left analytics notice and fifth image tile can be used to opt out; the tile can also opt back in and register a new browser ID.
 
 Create an Upstash Redis database and configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` as server-side environment variables in the Vercel project. Set the same variables in the shell before running `npm run dev` to test locally. The badge remains hidden if the API is unavailable or the Redis variables are missing. Never expose the Redis token in browser code.
 
