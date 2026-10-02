@@ -19,6 +19,13 @@
   const status = document.querySelector('#audio-status');
   const visitorCount = document.querySelector('#visitor-count');
   const visitorCountValue = document.querySelector('#visitor-count-value');
+  const analyticsNotice = document.querySelector('#analytics-notice');
+  const analyticsNoticeClose = document.querySelector('#analytics-notice-close');
+  const analyticsOptOut = document.querySelector('#analytics-opt-out');
+  const analyticsTileOptOut = document.querySelector('#analytics-tile-opt-out');
+  const visitorIdStorageKey = 'adult-mental-wellness-visitor-id';
+  const analyticsOptOutStorageKey = 'analyticsOptOut';
+  const analyticsNoticeDismissedStorageKey = 'analyticsNoticeDismissed';
   const hero = document.querySelector('#hero-video');
   const main = document.querySelector('#main');
   const heroUnmute = document.querySelector('#hero-unmute');
@@ -50,13 +57,28 @@
     if (status) status.textContent = text;
   }
 
+  async function removeVisitorRegistration() {
+    const visitorId = localStorage.getItem(visitorIdStorageKey);
+    if (!visitorId) return;
+    const response = await fetch('/api/visitors', {
+      method: 'DELETE',
+      headers: { 'X-Visitor-Id': visitorId },
+      cache: 'no-store',
+    });
+    if (response.ok) localStorage.removeItem(visitorIdStorageKey);
+  }
+
   async function loadVisitorCount() {
     if (!visitorCount || !visitorCountValue) return;
     try {
-      let visitorId = localStorage.getItem('adult-mental-wellness-visitor-id');
+      if (localStorage.getItem(analyticsOptOutStorageKey) === 'true') {
+        await removeVisitorRegistration();
+        return;
+      }
+      let visitorId = localStorage.getItem(visitorIdStorageKey);
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(visitorId || '')) {
         visitorId = crypto.randomUUID();
-        localStorage.setItem('adult-mental-wellness-visitor-id', visitorId);
+        localStorage.setItem(visitorIdStorageKey, visitorId);
       }
       const response = await fetch('/api/visitors', {
         headers: { 'X-Visitor-Id': visitorId },
@@ -64,6 +86,7 @@
       });
       if (!response.ok) return;
       const data = await response.json();
+      if (localStorage.getItem(analyticsOptOutStorageKey) === 'true') return;
       if (!Number.isSafeInteger(data.count) || data.count < 0) return;
       visitorCountValue.textContent = data.count.toLocaleString();
       visitorCount.hidden = false;
@@ -72,7 +95,47 @@
     }
   }
 
-  void loadVisitorCount();
+  try {
+    analyticsNotice.hidden = localStorage.getItem(analyticsNoticeDismissedStorageKey) === 'true' || localStorage.getItem(analyticsOptOutStorageKey) === 'true';
+  } catch {
+    analyticsNotice.hidden = false;
+  }
+
+  const visitorCountRequest = loadVisitorCount();
+
+  async function optOutOfAnalytics() {
+    analyticsNotice.hidden = true;
+    if (visitorCount) visitorCount.hidden = true;
+    if (analyticsTileOptOut) {
+      analyticsTileOptOut.disabled = true;
+      analyticsTileOptOut.setAttribute('aria-label', 'You are opted out of analytics');
+      analyticsTileOptOut.title = 'You are opted out of analytics';
+    }
+    try {
+      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
+      localStorage.setItem(analyticsOptOutStorageKey, 'true');
+      await visitorCountRequest;
+      await removeVisitorRegistration();
+    } catch {}
+  }
+
+  try {
+    if (localStorage.getItem(analyticsOptOutStorageKey) === 'true' && analyticsTileOptOut) {
+      analyticsTileOptOut.disabled = true;
+      analyticsTileOptOut.setAttribute('aria-label', 'You are opted out of analytics');
+      analyticsTileOptOut.title = 'You are opted out of analytics';
+    }
+  } catch {}
+
+  analyticsNoticeClose?.addEventListener('click', () => {
+    analyticsNotice.hidden = true;
+    try {
+      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
+    } catch {}
+  });
+
+  analyticsOptOut?.addEventListener('click', () => void optOutOfAnalytics());
+  analyticsTileOptOut?.addEventListener('click', () => void optOutOfAnalytics());
 
   function refreshHero() {
     if (!hero || !heroUnmute) return;

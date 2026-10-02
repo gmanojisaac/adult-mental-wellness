@@ -11,8 +11,8 @@ function respond(res, statusCode, data) {
 }
 
 module.exports = async function visitorsHandler(req, res) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+  if (req.method !== 'GET' && req.method !== 'DELETE') {
+    res.setHeader('Allow', 'GET, DELETE');
     respond(res, 405, { error: 'Method not allowed.' });
     return;
   }
@@ -39,7 +39,7 @@ module.exports = async function visitorsHandler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify([
-        ['SADD', visitorSet, hashedVisitorId],
+        [req.method === 'DELETE' ? 'SREM' : 'SADD', visitorSet, hashedVisitorId],
         ['SCARD', visitorSet],
       ]),
     });

@@ -15,6 +15,16 @@
     <span>Unique browsers</span>
     <strong id="visitor-count-value"></strong>
   </aside>
+  <aside id="analytics-notice" class="analytics-notice" aria-labelledby="analytics-notice-title" aria-describedby="analytics-notice-copy" hidden>
+    <div class="analytics-notice-header">
+      <strong id="analytics-notice-title">A small note about analytics</strong>
+      <button id="analytics-notice-close" class="analytics-notice-close" type="button" aria-label="Dismiss analytics notice">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <p id="analytics-notice-copy">We count unique browsers with a random ID via our analytics provider. No ads or profiling.</p>
+    <button id="analytics-opt-out" class="analytics-opt-out" type="button">Opt out of analytics <span aria-hidden="true">→</span></button>
+  </aside>
   <a class="skip" href="#main">Skip to content</a>
 <main id="main" tabindex="-1">
     <h1 class="sr-only">Everyday adult mental-wellness learning program</h1>
@@ -100,6 +110,14 @@
           </a>
           <button class="speaker" type="button" data-preview="employees" aria-label="Play Employees 18+ audio preview" aria-pressed="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="speaker-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="speaker-muted" d="m16 9 5 6m0-6-5 6"/></svg>
+          </button>
+        </article>
+        <article class="program-card optout">
+          <div class="card-image">
+            <img src="/assets/optout.png" alt="Analytics privacy notice about browser counting and profiling" loading="lazy">
+          </div>
+          <button id="analytics-tile-opt-out" class="optout-action" type="button" aria-label="Opt out of analytics" title="Opt out of analytics">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/><path d="m4 20 16-16"/></svg>
           </button>
         </article>
       </div>
