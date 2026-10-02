@@ -30,12 +30,18 @@
   let generation = 0;
   let sequence = null;
   let sequenceIndex = -1;
-  let previewsFinished = false;
+  let sequenceTimer = null;
+  let sequenceAudio = false;
+  let singleTileAudio = false;
+  let audioPlaying = false;
+  let heroMutedAfterSequence = true;
+  let heroWasPlayingBeforeHide = false;
 
   function refreshTileVisibility() {
     if (!hero || !main || !Number.isFinite(hero.duration)) return;
     const revealAt = Math.max(hero.duration - 1.5, 0);
     main.classList.toggle('tiles-hidden', hero.currentTime < revealAt);
+    refreshHero();
   }
 
   function announce(text) {
@@ -44,8 +50,11 @@
 
   function refreshHero() {
     if (!hero || !heroUnmute) return;
-    if (heroControls) heroControls.hidden = active !== null;
-    heroUnmute.hidden = previewsFinished || active !== null || (!hero.muted && !hero.paused);
+    const tilesVisible = !main?.classList.contains('tiles-hidden');
+    const mutedPlaying = hero.muted && !hero.paused;
+    heroPlayToggle.hidden = !hero.paused;
+    heroSoundToggle.hidden = tilesVisible || mutedPlaying;
+    heroUnmute.hidden = !mutedPlaying;
     const label = hero.paused ? 'Play video with sound' : 'Unmute video';
     heroUnmuteLabel.textContent = label;
     heroUnmute.setAttribute('aria-label', `${label} and enable audio previews`);
@@ -59,7 +68,7 @@
 
   function refresh() {
     buttons.forEach(button => {
-      const playing = button.dataset.preview === active;
+      const playing = button.dataset.preview === active && audioPlaying;
       button.setAttribute('aria-pressed', String(playing));
       if (button.classList.contains('listen-button')) {
         button.textContent = playing ? 'Stop audio preview' : 'Listen to program preview';
@@ -78,18 +87,50 @@
 
   function stop(preserveSequence = false) {
     cancelHover();
+    clearTimeout(sequenceTimer);
+    sequenceTimer = null;
     generation++;
     if (!preserveSequence) {
       sequence = null;
       sequenceIndex = -1;
+      sequenceAudio = false;
+      singleTileAudio = false;
     }
     Object.values(audio).forEach(preview => {
       preview.pause();
       preview.currentTime = 0;
     });
     active = null;
+    audioPlaying = false;
     refresh();
     announce('');
+  }
+
+  function showSilentFallback(id) {
+    announce(`${names[id]} audio could not play. Showing its tile silently for 5 seconds.`);
+    if (sequenceTimer !== null) return;
+    audioPlaying = false;
+    refresh();
+    sequenceTimer = setTimeout(() => {
+      sequenceTimer = null;
+      if (active !== id) return;
+      if (sequence) {
+        if (singleTileAudio) {
+          singleTileAudio = false;
+          sequenceAudio = false;
+        }
+        advanceProgramSequence();
+      } else stop();
+    }, 5000);
+  }
+
+  function showMutedTile(id) {
+    stop(true);
+    if (hero) hero.muted = true;
+    active = id;
+    audioPlaying = false;
+    refresh();
+    announce(`${names[id]} audio muted.`);
   }
 
   function scrollProgramToStart(id) {
@@ -108,26 +149,63 @@
     sequenceIndex++;
     if (sequenceIndex >= sequence.length) {
       const firstTile = sequence[0];
+      const restartMuted = heroMutedAfterSequence;
       sequence = null;
       sequenceIndex = -1;
-      previewsFinished = true;
-      main?.classList.add('previews-finished');
+      sequenceAudio = false;
       stop();
+      heroMutedAfterSequence = true;
       scrollProgramToStart(firstTile);
+      void restartHero(restartMuted);
       announce('Program previews finished.');
       return;
     }
     const id = sequence[sequenceIndex];
     scrollProgramToStart(id);
-    void play(id, true);
+    if (sequenceAudio) {
+      void play(id, true);
+    } else {
+      showMutedTile(id);
+      sequenceTimer = setTimeout(() => {
+        sequenceTimer = null;
+        if (active === id) advanceProgramSequence();
+      }, 5000);
+    }
   }
 
-  function startProgramSequence() {
-    sequence = [...cards]
+  function orderedProgramIds() {
+    return [...cards]
       .sort((left, right) => Number(getComputedStyle(left).order) - Number(getComputedStyle(right).order))
       .map(card => card.dataset.program);
-    sequenceIndex = -1;
+  }
+
+  function startTileSequence(id, playAudio, playOnlyThisTile = false) {
+    if (!sequence) sequence = orderedProgramIds();
+    const index = sequence.indexOf(id);
+    if (index < 0) return false;
+    sequenceAudio = playAudio;
+    singleTileAudio = playAudio && playOnlyThisTile;
+    heroMutedAfterSequence = !playAudio;
+    sequenceIndex = index - 1;
+    stop(true);
+    if (hero) hero.muted = true;
     advanceProgramSequence();
+    return true;
+  }
+
+  function startProgramSequence(playAudio = false) {
+    sequence = orderedProgramIds();
+    sequenceIndex = -1;
+    sequenceAudio = playAudio;
+    singleTileAudio = false;
+    heroMutedAfterSequence = hero?.muted ?? true;
+    if (hero) hero.muted = true;
+    advanceProgramSequence();
+  }
+
+  function startTileAudioSequence() {
+    if (!sequence || sequenceAudio) return false;
+    return startTileSequence(sequence[0], true);
   }
 
   async function play(id, preserveSequence = false) {
@@ -136,6 +214,7 @@
     // Keep the cinematic video moving, but give the preview exclusive use of sound.
     if (hero) hero.muted = true;
     active = id;
+    audioPlaying = true;
     refresh();
     try {
       await audio[id].play();
@@ -144,13 +223,9 @@
       announce(`${names[id]} preview playing.`);
     } catch {
       if (generation !== token) return;
-      if (preserveSequence) {
-        advanceProgramSequence();
-        return;
-      }
-      stop();
-      announce('Audio could not play. Try the speaker button.');
-      if (hint) hint.textContent = 'Use a speaker to play its preview.';
+      audioPlaying = false;
+      refresh();
+      showSilentFallback(id);
     }
   }
 
@@ -164,6 +239,38 @@
     if (!value) stop();
   }
 
+  async function restartHero(muted) {
+    if (!hero) return;
+    stop();
+    hero.currentTime = 0;
+    hero.muted = muted;
+    try {
+      await hero.play();
+    } catch {
+      if (!muted) {
+        hero.muted = true;
+        try {
+          await hero.play();
+        } catch {
+          announce('The video could not play. Use the play button to try again.');
+        }
+      } else announce('The video could not play. Use the play button to try again.');
+    }
+    refreshHero();
+  }
+
+  function resetPlaybackToStart() {
+    if (!hero) return;
+    stop();
+    heroWasPlayingBeforeHide = false;
+    hero.currentTime = 0;
+    heroMutedAfterSequence = false;
+    main?.classList.add('tiles-hidden');
+    scrollProgramToStart(orderedProgramIds()[0]);
+    refreshTileVisibility();
+    void restartHero(false);
+  }
+
   toggle?.addEventListener('click', () => {
     setEnabled(!enabled);
     announce(enabled ? 'Hover audio enabled.' : 'Audio previews muted.');
@@ -171,13 +278,13 @@
 
   buttons.forEach(button => button.addEventListener('click', () => {
     const id = button.dataset.preview;
-    if (active === id) {
-      stop();
-      announce('Audio preview stopped.');
+    if (active === id && audioPlaying) {
+      startTileSequence(id, false);
       return;
     }
     setEnabled(true);
-    void play(id);
+    if (sequence) startTileSequence(id, true, true);
+    else void play(id);
   }));
 
   cards.forEach(card => {
@@ -204,7 +311,13 @@
     preview.addEventListener('ended', () => {
       if (active !== id) return;
       if (sequence) {
-        advanceProgramSequence();
+        if (sequenceAudio) {
+          if (singleTileAudio) {
+            singleTileAudio = false;
+            sequenceAudio = false;
+          }
+          advanceProgramSequence();
+        }
         return;
       }
       stop();
@@ -212,12 +325,7 @@
     });
     preview.addEventListener('error', () => {
       if (active !== id) return;
-      if (sequence) {
-        advanceProgramSequence();
-        return;
-      }
-      stop();
-      announce('The audio preview is unavailable. The description is shown on the card.');
+      showSilentFallback(id);
     });
   });
 
@@ -242,31 +350,36 @@
 
     async function unmuteHero() {
       const moveFocus = document.activeElement === heroUnmute;
-      stop();
       setEnabled(true);
-      hero.muted = false;
+      if (startTileAudioSequence()) return;
+      await restartHero(false);
+      if (moveFocus && heroUnmute.hidden) heroSoundToggle.focus({ preventScroll: true });
+    }
+
+    async function autoplayHeroMuted() {
+      hero.currentTime = 0;
+      hero.muted = true;
       try {
         await hero.play();
       } catch {
-        announce('The video could not play. Use the play button to try again.');
+        refreshHero();
       }
       refreshHero();
-      if (moveFocus && heroUnmute.hidden) heroSoundToggle.focus({ preventScroll: true });
     }
 
     heroUnmute.addEventListener('click', () => void unmuteHero());
     heroSoundToggle.addEventListener('click', () => {
       if (hero.muted) void unmuteHero();
-      else hero.muted = true;
+      else {
+        hero.muted = true;
+        refreshHero();
+      }
     });
     heroPlayToggle.addEventListener('click', () => {
       if (hero.paused) {
-        if (!hero.muted) stop();
-        void hero.play().catch(() => {
-          refreshHero();
-          announce('The video could not play. Use the play button to try again.');
-        });
-      } else hero.pause();
+        setEnabled(true);
+        void restartHero(false);
+      } else resetPlaybackToStart();
     });
     hero.addEventListener('play', () => {
       if (!hero.muted) stop();
@@ -275,8 +388,9 @@
     });
     hero.addEventListener('pause', refreshHero);
     hero.addEventListener('ended', () => {
+      heroWasPlayingBeforeHide = false;
       refreshTileVisibility();
-      if (!hero.muted) startProgramSequence();
+      startProgramSequence(!hero.muted);
       refreshHero();
     });
     hero.addEventListener('loadedmetadata', refreshTileVisibility);
@@ -290,16 +404,22 @@
     hero.controls = false;
     heroControls.hidden = false;
     refreshHero();
-    void hero.play().catch(refreshHero);
+    void autoplayHeroMuted();
   }
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') stop();
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      stop();
-      hero?.pause();
+      heroWasPlayingBeforeHide = Boolean(hero && !hero.paused && !hero.ended);
+      return;
     }
+    const shouldResume = heroWasPlayingBeforeHide;
+    heroWasPlayingBeforeHide = false;
+    if (shouldResume && hero?.paused && !hero.ended && active === null) {
+      void hero.play().catch(refreshHero);
+    }
+    refreshHero();
   });
   window.addEventListener('pagehide', stop);
 })();
