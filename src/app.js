@@ -21,13 +21,9 @@
   const visitorCount = document.querySelector('#visitor-count');
   const visitorCountValue = document.querySelector('#visitor-count-value');
   const visitorCountryCountValue = document.querySelector('#visitor-country-count-value');
-  const analyticsNotice = document.querySelector('#analytics-notice');
-  const analyticsNoticeClose = document.querySelector('#analytics-notice-close');
-  const analyticsOptOut = document.querySelector('#analytics-opt-out');
   const analyticsTileOptOut = document.querySelector('#analytics-tile-opt-out');
   const visitorIdStorageKey = 'adult-mental-wellness-visitor-id';
   const analyticsOptOutStorageKey = 'analyticsOptOut';
-  const analyticsNoticeDismissedStorageKey = 'analyticsNoticeDismissed';
   const hero = document.querySelector('#hero-video');
   const main = document.querySelector('#main');
   const heroUnmute = document.querySelector('#hero-unmute');
@@ -102,7 +98,7 @@
       if (!Number.isSafeInteger(data.count) || data.count < 0 || !Number.isSafeInteger(data.countries) || data.countries < 0) return;
       visitorCountValue.textContent = data.count.toLocaleString();
       visitorCountryCountValue.textContent = data.countries.toLocaleString();
-      visitorCount.setAttribute('aria-label', `${data.count.toLocaleString()} unique browsers across ${data.countries.toLocaleString()} countries. Show opt-out tile.`);
+      visitorCount.setAttribute('aria-label', `Visitors ${data.count.toLocaleString()} / ${data.countries.toLocaleString()}. Show opt-out tile.`);
       visitorCount.hidden = false;
     } catch {
       visitorCount.hidden = true;
@@ -110,11 +106,8 @@
   }
 
   try {
-    analyticsNotice.hidden = localStorage.getItem(analyticsNoticeDismissedStorageKey) === 'true' || localStorage.getItem(analyticsOptOutStorageKey) === 'true';
     refreshAnalyticsTileOptOut();
-  } catch {
-    analyticsNotice.hidden = false;
-  }
+  } catch {}
 
   const visitorCountRequest = loadVisitorCount();
 
@@ -129,10 +122,8 @@
   });
 
   async function optOutOfAnalytics() {
-    analyticsNotice.hidden = true;
     if (visitorCount) visitorCount.hidden = true;
     try {
-      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
       localStorage.setItem(analyticsOptOutStorageKey, 'true');
       refreshAnalyticsTileOptOut();
       await visitorCountRequest;
@@ -143,24 +134,13 @@
   async function optInToAnalytics() {
     try {
       localStorage.removeItem(analyticsOptOutStorageKey);
-      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
       refreshAnalyticsTileOptOut();
     } catch {
       return;
     }
-    analyticsNotice.hidden = true;
     if (visitorCount) visitorCount.hidden = true;
     await loadVisitorCount();
   }
-
-  analyticsNoticeClose?.addEventListener('click', () => {
-    analyticsNotice.hidden = true;
-    try {
-      localStorage.setItem(analyticsNoticeDismissedStorageKey, 'true');
-    } catch {}
-  });
-
-  analyticsOptOut?.addEventListener('click', () => void optOutOfAnalytics());
   analyticsTileOptOut?.addEventListener('click', () => {
     if (analyticsTileOptOut.getAttribute('aria-pressed') === 'true') void optInToAnalytics();
     else void optOutOfAnalytics();
