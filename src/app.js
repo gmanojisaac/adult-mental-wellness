@@ -14,11 +14,13 @@
   }));
   const buttons = document.querySelectorAll('[data-preview]');
   const cards = document.querySelectorAll('[data-program]');
+  const optoutTile = document.querySelector('.program-card.optout');
   const toggle = document.querySelector('#audio-toggle');
   const hint = document.querySelector('#audio-hint');
   const status = document.querySelector('#audio-status');
   const visitorCount = document.querySelector('#visitor-count');
   const visitorCountValue = document.querySelector('#visitor-count-value');
+  const visitorCountryCountValue = document.querySelector('#visitor-country-count-value');
   const analyticsNotice = document.querySelector('#analytics-notice');
   const analyticsNoticeClose = document.querySelector('#analytics-notice-close');
   const analyticsOptOut = document.querySelector('#analytics-opt-out');
@@ -45,6 +47,7 @@
   let audioPlaying = false;
   let heroMutedAfterSequence = true;
   let heroWasPlayingBeforeHide = false;
+  let scrollToOptoutWhenSequenceStarts = false;
 
   function refreshTileVisibility() {
     if (!hero || !main || !Number.isFinite(hero.duration)) return;
@@ -78,7 +81,7 @@
   }
 
   async function loadVisitorCount() {
-    if (!visitorCount || !visitorCountValue) return;
+    if (!visitorCount || !visitorCountValue || !visitorCountryCountValue) return;
     try {
       if (localStorage.getItem(analyticsOptOutStorageKey) === 'true') {
         await removeVisitorRegistration();
@@ -96,8 +99,10 @@
       if (!response.ok) return;
       const data = await response.json();
       if (localStorage.getItem(analyticsOptOutStorageKey) === 'true') return;
-      if (!Number.isSafeInteger(data.count) || data.count < 0) return;
+      if (!Number.isSafeInteger(data.count) || data.count < 0 || !Number.isSafeInteger(data.countries) || data.countries < 0) return;
       visitorCountValue.textContent = data.count.toLocaleString();
+      visitorCountryCountValue.textContent = data.countries.toLocaleString();
+      visitorCount.setAttribute('aria-label', `${data.count.toLocaleString()} unique browsers across ${data.countries.toLocaleString()} countries. Show opt-out tile.`);
       visitorCount.hidden = false;
     } catch {
       visitorCount.hidden = true;
@@ -112,6 +117,16 @@
   }
 
   const visitorCountRequest = loadVisitorCount();
+
+  visitorCount?.addEventListener('click', () => {
+    const tilesVisible = !main?.classList.contains('tiles-hidden');
+    if (sequence) {
+      scrollProgramToStart('optout');
+      return;
+    }
+    if (!tilesVisible || (hero && !hero.ended)) scrollToOptoutWhenSequenceStarts = true;
+    if (tilesVisible) scrollProgramToStart('optout');
+  });
 
   async function optOutOfAnalytics() {
     analyticsNotice.hidden = true;
@@ -180,6 +195,7 @@
       }
     });
     cards.forEach(card => card.classList.toggle('is-playing', card.dataset.program === active));
+    optoutTile?.classList.toggle('is-playing', active === 'optout');
     refreshHero();
   }
 
@@ -233,14 +249,17 @@
     active = id;
     audioPlaying = false;
     refresh();
-    announce(`${names[id]} audio muted.`);
+    announce(id === 'optout' ? 'Opt-out tile highlighted.' : `${names[id]} audio muted.`);
   }
 
   function scrollProgramToStart(id) {
-    if (!window.matchMedia('(max-width: 600px)').matches) return;
-    const card = [...cards].find(item => item.dataset.program === id);
+    const card = id === 'optout' ? optoutTile : [...cards].find(item => item.dataset.program === id);
     const grid = card?.parentElement;
     if (!card || !grid) return;
+    if (!window.matchMedia('(max-width: 600px)').matches) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      return;
+    }
     grid.scrollTo({
       left: grid.scrollLeft + card.getBoundingClientRect().left - grid.getBoundingClientRect().left,
       behavior: 'smooth',
@@ -264,8 +283,10 @@
       return;
     }
     const id = sequence[sequenceIndex];
-    scrollProgramToStart(id);
-    if (sequenceAudio) {
+    const targetId = sequenceIndex === 0 && scrollToOptoutWhenSequenceStarts ? 'optout' : id;
+    if (sequenceIndex === 0) scrollToOptoutWhenSequenceStarts = false;
+    scrollProgramToStart(targetId);
+    if (sequenceAudio && id !== 'optout') {
       void play(id, true);
     } else {
       showMutedTile(id);
@@ -276,14 +297,15 @@
     }
   }
 
-  function orderedProgramIds() {
-    return [...cards]
+  function orderedTileIds() {
+    return [...document.querySelectorAll('.card-grid .program-card')]
       .sort((left, right) => Number(getComputedStyle(left).order) - Number(getComputedStyle(right).order))
-      .map(card => card.dataset.program);
+      .map(card => card.dataset.program || (card.classList.contains('optout') ? 'optout' : null))
+      .filter(Boolean);
   }
 
   function startTileSequence(id, playAudio, playOnlyThisTile = false) {
-    if (!sequence) sequence = orderedProgramIds();
+    if (!sequence) sequence = orderedTileIds();
     const index = sequence.indexOf(id);
     if (index < 0) return false;
     sequenceAudio = playAudio;
@@ -297,7 +319,7 @@
   }
 
   function startProgramSequence(playAudio = false) {
-    sequence = orderedProgramIds();
+    sequence = orderedTileIds();
     sequenceIndex = -1;
     sequenceAudio = playAudio;
     singleTileAudio = false;
@@ -369,7 +391,7 @@
     hero.currentTime = 0;
     heroMutedAfterSequence = false;
     main?.classList.add('tiles-hidden');
-    scrollProgramToStart(orderedProgramIds()[0]);
+    scrollProgramToStart(orderedTileIds()[0]);
     refreshTileVisibility();
     void restartHero(false);
   }

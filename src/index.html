@@ -11,10 +11,13 @@
   <script src="/app.js" defer></script>
 </head>
 <body class="landing">
-  <aside id="visitor-count" class="visitor-count" aria-label="All-time unique browsers" aria-live="polite" hidden>
-    <span>Unique browsers</span>
+  <button id="visitor-count" class="visitor-count" type="button" aria-label="Visitor and country counts. Show opt-out tile." hidden>
+    <span>Visitors:</span>
     <strong id="visitor-count-value"></strong>
-  </aside>
+    <span aria-hidden="true">/</span>
+    <strong id="visitor-country-count-value"></strong>
+    <span>countries</span>
+  </button>
   <aside id="analytics-notice" class="analytics-notice" aria-labelledby="analytics-notice-title" aria-describedby="analytics-notice-copy" hidden>
     <div class="analytics-notice-header">
       <strong id="analytics-notice-title">A small note about analytics</strong>
@@ -22,11 +25,11 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
       </button>
     </div>
-    <p id="analytics-notice-copy">We count unique browsers with a random ID via our analytics provider. No ads or profiling.</p>
+    <p id="analytics-notice-copy">We count unique browsers and aggregate countries using a random browser ID and coarse country code from our hosting platform. No ads or profiling.</p>
     <button id="analytics-opt-out" class="analytics-opt-out" type="button">Opt out of analytics <span aria-hidden="true">→</span></button>
   </aside>
   <a class="skip" href="#main">Skip to content</a>
-<main id="main" tabindex="-1">
+<main id="main" class="tiles-hidden" tabindex="-1">
     <h1 class="sr-only">Everyday adult mental-wellness learning program</h1>
     <div class="media-stage">
     <section class="hero" aria-label="Program introduction">
