@@ -17,6 +17,8 @@
   const toggle = document.querySelector('#audio-toggle');
   const hint = document.querySelector('#audio-hint');
   const status = document.querySelector('#audio-status');
+  const visitorCount = document.querySelector('#visitor-count');
+  const visitorCountValue = document.querySelector('#visitor-count-value');
   const hero = document.querySelector('#hero-video');
   const main = document.querySelector('#main');
   const heroUnmute = document.querySelector('#hero-unmute');
@@ -47,6 +49,30 @@
   function announce(text) {
     if (status) status.textContent = text;
   }
+
+  async function loadVisitorCount() {
+    if (!visitorCount || !visitorCountValue) return;
+    try {
+      let visitorId = localStorage.getItem('adult-mental-wellness-visitor-id');
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(visitorId || '')) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem('adult-mental-wellness-visitor-id', visitorId);
+      }
+      const response = await fetch('/api/visitors', {
+        headers: { 'X-Visitor-Id': visitorId },
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!Number.isSafeInteger(data.count) || data.count < 0) return;
+      visitorCountValue.textContent = data.count.toLocaleString();
+      visitorCount.hidden = false;
+    } catch {
+      visitorCount.hidden = true;
+    }
+  }
+
+  void loadVisitorCount();
 
   function refreshHero() {
     if (!hero || !heroUnmute) return;

@@ -1,6 +1,6 @@
 # Everyday adult mental-wellness learning program
 
-A Vercel-ready static website using the supplied cinematic images, finished hero video and four voice previews. No dependencies, environment variables or paid backend are required.
+A Vercel-ready website using the supplied cinematic images, finished hero video and four voice previews. The visitor counter uses a Vercel serverless function and an Upstash Redis database.
 
 The landing page contains a compact project identity and one cinematic panel: the full hero video above four compact image cards. Cards use four columns on desktop, two at tablet widths and one on mobile. Descriptions are readable HTML text over the images, and the existing program pages remain available at the routes below.
 
@@ -14,6 +14,12 @@ The landing page contains a compact project identity and one cinematic panel: th
 ## Local preview
 
 Requires Node.js 20 or later. Run `npm run dev` and open `http://localhost:3000`. Run `npm run build` to create `dist/`.
+
+## Unique visitor counter
+
+The top-left badge shows an all-time count of unique browser profiles. The browser stores a random first-party ID in local storage; the `/api/visitors` function hashes that ID and stores it in an Upstash Redis set. No IP address or personal profile data is stored. Clearing local storage or using a private window creates a new browser ID and can increase the count again.
+
+Create an Upstash Redis database and configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` as server-side environment variables in the Vercel project. Set the same variables in the shell before running `npm run dev` to test locally. The badge remains hidden if the API is unavailable or the Redis variables are missing. Never expose the Redis token in browser code.
 
 ## Page routes
 
