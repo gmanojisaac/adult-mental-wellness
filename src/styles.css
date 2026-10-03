@@ -133,6 +133,12 @@ h3 { line-height: 1.3; }
 .programs { padding: 8px; scroll-margin-top: 12px; }
 .programs { transition: opacity .5s ease, transform .5s ease; }
 .tiles-hidden .programs { opacity: 0; transform: translateY(18px); pointer-events: none; }
+.adults-feature { width: min(1000px, calc(100% - 48px)); margin: 32px auto 8px; }
+.adults-feature-copy { max-width: 620px; margin-bottom: 18px; }
+.adults-feature h2 { margin: 6px 0 10px; }
+.adults-feature p { color: var(--muted); }
+.adults-feature a { display: inline-block; margin-top: 12px; color: var(--teal); border-bottom: 1px solid currentColor; }
+.adults-feature video { display: block; width: 100%; max-height: 65svh; aspect-ratio: 16 / 9; object-fit: contain; background: #050e1d; border: 1px solid #ffffff25; border-radius: 16px; }
 .audio-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; padding: 0 4px; }
 .audio-toggle, .listen-button {
   border: 1px solid #61c7d454;
@@ -253,7 +259,7 @@ footer p { max-width: 440px; }
 .other-programs a{padding:9px 19px;border:1px solid #ffffff25;border-radius:25px;font-size:15px}
 .other-programs a:hover{border-color:var(--accent)}
 @media (min-width: 1021px) {
-  .landing { overflow: hidden; }
+  .landing { overflow-x: hidden; }
   .landing main { width: 100%; }
   .landing .media-stage {
     border: 0;
@@ -266,12 +272,8 @@ footer p { max-width: 440px; }
   .landing .hero-frame { height: calc(100vw * 0.478125); overflow: hidden; background: transparent; }
   .landing .hero video { height: 100%; max-height: none; object-fit: cover; }
   .landing .programs {
-    position: relative;
-    z-index: 2;
     width: 90%;
-    margin-top: -242px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 24px auto 0;
     display: flex;
     flex-direction: column;
   }
@@ -300,7 +302,8 @@ footer p { max-width: 440px; }
   .landing .media-stage { position: relative; border: 0; border-radius: 0; }
   .landing .hero-frame { height: 100vh; height: 100svh; }
   .landing .hero video { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; }
-  .landing .programs { position: absolute; right: 0; bottom: 0; left: 0; z-index: 3; width: auto; margin: 0; padding: 8px 10px 10px; background: linear-gradient(180deg, transparent, #071426e8 24%, #071426 100%); }
+  .landing .adults-feature { width: calc(100% - 24px); margin-top: 24px; }
+  .landing .programs { position: relative; width: auto; margin: 24px 0 0; padding: 8px 10px 10px; }
   .landing .card-grid { display: flex; gap: 8px; padding-right: max(0px, calc(100% - min(78vw, 310px))); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .landing .card-grid::-webkit-scrollbar { display: none; }
   .landing .program-card { flex: 0 0 min(78vw, 310px); min-height: 200px; scroll-snap-align: start; }
