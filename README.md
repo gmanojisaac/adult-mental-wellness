@@ -1,8 +1,8 @@
 # Everyday adult mental-wellness learning program
 
-A Vercel-ready website using the supplied cinematic images, finished hero video and four voice previews. The visitor counter uses a Vercel serverless function and an Upstash Redis database.
+A Vercel-ready website using the supplied cinematic images, finished hero video and four voice previews. The visitor counter uses a Vercel serverless function and an Upstash Redis database. See [CHANGELOG.md](CHANGELOG.md) for release history.
 
-The landing page contains a compact project identity and one cinematic panel: the full hero video above four compact image cards. Cards use four columns on desktop, two at tablet widths and one on mobile. Descriptions are readable HTML text over the images, and the existing program pages remain available at the routes below.
+The landing page contains a compact project identity and one cinematic panel: the full hero video above four compact video cards. Cards use four columns on desktop, two at tablet widths and one on mobile. Descriptions are readable HTML text over the videos, and the existing program pages remain available at the routes below.
 
 ## Deploy to your repository and Vercel
 
@@ -37,6 +37,6 @@ Unmute the hero or select Enable audio previews to start narration after a 400ms
 
 Assets live in `src/assets/`. Uploaded PNGs were converted into smaller WebP images; visual content was preserved. Supplied MP3 and MP4 files are unchanged. Card descriptions remain real HTML text.
 
-## Scope of this first version
+## Scope of this release
 
 This is the landing page and four program overview pages. Enrollment, accounts, scheduling, payments, WhatsApp reminders, lesson delivery, quizzes and certificates require the separate progress-app implementation. No working enrollment/payment form is presented. The supplied hero video did not include a caption file; add verified captions and a transcript before public release. No credentials are included.
